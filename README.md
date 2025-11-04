@@ -1,6 +1,8 @@
 # Overwatch 2 Battle Pass Calculator
 
-Access the calculator here: https://sophice.github.io/ow2-battle-pass-calculator/
+I've modified the original calculator to be more robust and easily updated for future seasons with seasons.js. Credit to sophice for the original calculator which can be found at https://sophice.github.io/ow2-battle-pass-calculator/
+
+Access the calculator here: https://susumajii.github.io/ow2-battle-pass-calculator/
 
 This is a battle pass calculator for Overwatch 2. Fill out a few fields and you will get back;
 
