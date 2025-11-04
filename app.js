@@ -1,37 +1,44 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('app', function () {
         return {
-            //past progress
+            // past progress
             current_tier: this.$persist(1),
             current_tier_xp: this.$persist(0),
             days_missed: this.$persist(0),
 
-            //future plans
+            // future plans
             expected_weeklies: this.$persist(8),
             expected_play_days: this.$persist(5),
             expected_dailies: this.$persist(3),
             expected_daily_matches: this.$persist(5),
             expected_match_xp: this.$persist(500),
             days_to_be_missed: this.$persist(0),
-            // default values
-            season: { season: 1, seasonStart: new Date('2022-10-04'), seasonEnd: new Date('2022-12-06') },
 
-            //ui
+            // default values (Season 19: Haunted Masquerade)
+            // Using explicit dates so we don't rely on a rolling start from 2022.
+            season: {
+                season: 19,
+                seasonStart: new Date('2025-10-14T18:00:00Z'), // 11am PT
+                seasonEnd:   new Date('2025-12-09T18:00:00Z')  // 11am PT
+            },
+
+            // ui
             tab: this.$persist('all'),
 
             init() {
-                // get current season and display it
-                this.season = this.getSeason(new Date('2022-10-04'));
-                document.getElementById('season_title').innerText = 'Season ' + this.season.season;
+                // display current season
+                const titleEl = document.getElementById('season_title');
+                if (titleEl) titleEl.innerText = 'Season ' + this.season.season;
+
                 if (window.location.hash) {
                     const params = new URLSearchParams(window.location.hash.substring(1));
 
-                    //past progress
+                    // past progress
                     if (params.has('t')) this.current_tier = params.get('t');
                     if (params.has('x')) this.current_tier_xp = params.get('x');
                     if (params.has('s')) this.days_missed = params.get('s');
 
-                    //future plans
+                    // future plans
                     if (params.has('w')) this.expected_weeklies = params.get('w');
                     if (params.has('p')) this.expected_play_days = params.get('p');
                     if (params.has('d')) this.expected_dailies = params.get('d');
@@ -41,16 +48,16 @@ document.addEventListener('alpine:init', () => {
                 }
             },
 
-            //buttons
+            // buttons
             share() {
                 const params = new URLSearchParams();
 
-                //past progress
+                // past progress
                 params.set('t', this.currentTier().toString());
                 params.set('x', this.currentTierXp().toString());
                 params.set('s', this.daysMissed().toString());
 
-                //future plans
+                // future plans
                 params.set('w', this.expectedWeeklies().toString());
                 params.set('p', this.expectedPlayDays().toString());
                 params.set('d', this.expectedDailies().toString());
@@ -64,12 +71,12 @@ document.addEventListener('alpine:init', () => {
                 window.prompt('Here is your link!', link);
             },
             reset() {
-                //past progress
+                // past progress
                 this.current_tier = 1;
                 this.current_tier_xp = 0;
                 this.days_missed = 0;
 
-                //future plans
+                // future plans
                 this.expected_weeklies = 8;
                 this.expected_play_days = 5;
                 this.expected_dailies = 3;
@@ -78,7 +85,7 @@ document.addEventListener('alpine:init', () => {
                 this.days_to_be_missed = 0;
             },
 
-            //tabs
+            // tabs
             currentTab() {
                 return this.tab;
             },
@@ -90,13 +97,13 @@ document.addEventListener('alpine:init', () => {
             },
             selectTab(tab) {
                 this.tab = tab;
-
-                //not sure i like this, it might confuse people that don't realize it's on, leaving it disabled for now
-                //window.location.hash = this.tab;
+                // window.location.hash = this.tab; // intentionally disabled
             },
 
-            //season
+            // season utilities
             /**
+             * Legacy helper that derived season N from a base start (kept for reference/testing).
+             * Not used for S19 since we set explicit dates above.
              *
              * @param {Date} startDate default is 2022-10-04
              * @param {Date} today default is today, overwrite for testing
@@ -104,19 +111,13 @@ document.addEventListener('alpine:init', () => {
              */
             getSeason(startDate = new Date('2022-10-04'), today = new Date()) {
                 const oneWeek = 7 * 24 * 60 * 60 * 1000;
-                // Calculate season duration in milliseconds
-                const seasonDuration = 9 * oneWeek;
-                // Calculate the difference between start date and today
+                const seasonDuration = 9 * oneWeek; // historical default
                 const diff = today - startDate;
-                // Get the season number
                 const season = Math.floor(diff / seasonDuration) + 1;
 
-                // Get the start date of the season
                 const seasonStart = new Date(startDate.getTime() + seasonDuration * (season - 1));
-                // Get the end date of the season
                 const seasonEnd = new Date(seasonStart.getTime() + seasonDuration - 1);
 
-                // Return season number, start and end dates
                 return { season, seasonStart, seasonEnd };
             },
             seasonStart() {
@@ -125,6 +126,13 @@ document.addEventListener('alpine:init', () => {
             seasonEnd() {
                 return this.season.seasonEnd;
             },
+            // dynamic season helpers
+            seasonLengthDays() {
+                return Math.max(0, Math.ceil((this.seasonEnd() - this.seasonStart()) / 86400000));
+            },
+            seasonWeeks() {
+                return Math.max(1, Math.round(this.seasonLengthDays() / 7)); // e.g., 56d -> 8w
+            },
             daysLeft() {
                 return (this.seasonEnd() - new Date()) / 86400000;
             },
@@ -132,7 +140,7 @@ document.addEventListener('alpine:init', () => {
                 return parseInt(this.days_missed || 0);
             },
 
-            //current progress
+            // current progress
             currentDay() {
                 return (new Date() - this.seasonStart()) / 86400000;
             },
@@ -192,7 +200,7 @@ document.addEventListener('alpine:init', () => {
                 return Math.min((this.currentXp() - 800000) / 2000000, 1) * 100;
             },
 
-            //remaining
+            // remaining
             remainingDays() {
                 return Math.max((this.seasonEnd() - new Date()) / 86400000, 0);
             },
@@ -219,7 +227,7 @@ document.addEventListener('alpine:init', () => {
                 return (this.remainingPrestigeTiers() / 200) * 100;
             },
 
-            //minimum daily
+            // minimum daily
             minimumDailyTiers() {
                 return Math.max(this.remainingTiers() / this.remainingDays(), 0);
             },
@@ -230,7 +238,7 @@ document.addEventListener('alpine:init', () => {
                 return Math.max(this.remainingPercent() / this.remainingDays(), 0);
             },
 
-            //minimum weekly
+            // minimum weekly
             minimumWeeklyTiers() {
                 return this.minimumDailyTiers() * 7;
             },
@@ -241,7 +249,7 @@ document.addEventListener('alpine:init', () => {
                 return this.minimumDailyPercent() * 7;
             },
 
-            //minimum daily for prestige
+            // minimum daily for prestige
             minimumDailyPrestigeTiers() {
                 return this.remainingPrestigeTiers() / this.remainingDays();
             },
@@ -252,7 +260,7 @@ document.addEventListener('alpine:init', () => {
                 return this.remainingPrestigePercent() / this.remainingDays();
             },
 
-            //minimum weekly for prestige
+            // minimum weekly for prestige
             minimumWeeklyPrestigeTiers() {
                 return this.minimumDailyPrestigeTiers() * 7;
             },
@@ -263,7 +271,7 @@ document.addEventListener('alpine:init', () => {
                 return this.minimumDailyPrestigePercent() * 7;
             },
 
-            //projected missed
+            // projected missed
             projectedTiersMissed() {
                 return this.projectedDailyTiers() * this.daysMissed();
             },
@@ -274,7 +282,7 @@ document.addEventListener('alpine:init', () => {
                 return this.projectedDailyPercent() * this.daysMissed();
             },
 
-            //projected daily earn rate
+            // projected daily earn rate
             projectedDailyTiers() {
                 return this.currentCompletedTier() / this.daysPlayed();
             },
@@ -285,7 +293,7 @@ document.addEventListener('alpine:init', () => {
                 return this.currentPercent() / this.daysPlayed();
             },
 
-            //projected weekly earn rate
+            // projected weekly earn rate
             projectedWeeklyTiers() {
                 return this.projectedDailyTiers() * 7;
             },
@@ -296,7 +304,7 @@ document.addEventListener('alpine:init', () => {
                 return this.projectedDailyPercent() * 7;
             },
 
-            //projected finish
+            // projected finish
             projectedWillFinish() {
                 return this.projectedTiers() >= 80;
             },
@@ -309,7 +317,8 @@ document.addEventListener('alpine:init', () => {
                 return result;
             },
             projectedSpareDays() {
-                return 63 - (this.daysPlayed() + this.projectedDays());
+                // was 63 (9 weeks) — now dynamic
+                return this.seasonLengthDays() - (this.daysPlayed() + this.projectedDays());
             },
             projectedTiers() {
                 let expecting = this.currentXp() + (this.projectedDailyXp() * this.remainingDays());
@@ -331,7 +340,7 @@ document.addEventListener('alpine:init', () => {
                 return (this.projectedPrestigeTiers() / 200) * 100;
             },
 
-            //projected prestige
+            // projected prestige
             projectedWillPrestige() {
                 return this.projectedTiers() > 80;
             },
@@ -339,11 +348,13 @@ document.addEventListener('alpine:init', () => {
                 return this.projectedPrestigeTiers() >= 120;
             },
             projectedPrestigeDays() {
-                return (63 - this.projectedPrestigeSpareDays()) - this.daysPlayed();
+                // was 63 — now dynamic
+                return (this.seasonLengthDays() - this.projectedPrestigeSpareDays()) - this.daysPlayed();
             },
             projectedPrestigeSpareDays() {
                 let extra = this.projectedXp() - (2000000 - this.currentXp());
-                return Math.min(extra / this.projectedDailyXp(), 7 * 9);
+                // cap by total season length in days (instead of 7 * 9)
+                return Math.min(extra / this.projectedDailyXp(), this.seasonLengthDays());
             },
             projectedPrestigeTiers() {
                 let have = this.currentXp();
@@ -362,7 +373,7 @@ document.addEventListener('alpine:init', () => {
                 return 8 - this.projectedPrestigeTitles();
             },
 
-            //projected fail
+            // projected fail
             projectedWillFail() {
                 return this.projectedTiers() < 80;
             },
@@ -376,7 +387,7 @@ document.addEventListener('alpine:init', () => {
                 return this.projectedSpareTiersCoins() / 100;
             },
 
-            //expected daily earn rate
+            // expected daily earn rate
             expectedDailyMatches() {
                 return parseInt(this.expected_daily_matches || 0);
             },
@@ -421,7 +432,7 @@ document.addEventListener('alpine:init', () => {
                 return (this.expectedDailyXp() / 800000) * 100;
             },
 
-            //expected weekly earn rate
+            // expected weekly earn rate
             expectedWeeklyTiers() {
                 return this.expectedDailyTiers() * 7;
             },
@@ -432,7 +443,7 @@ document.addEventListener('alpine:init', () => {
                 return this.expectedDailyPercent() * 7;
             },
 
-            //expected finish
+            // expected finish
             expectedWillFinish() {
                 return this.expectedTiers() >= 80;
             },
@@ -440,7 +451,8 @@ document.addEventListener('alpine:init', () => {
                 return Math.max(this.currentMissingXp() / this.expectedDailyXp(), 0);
             },
             expectedSpareDays() {
-                return 63 - (this.currentDay() + this.expectedDays());
+                // was 63 — now dynamic
+                return this.seasonLengthDays() - (this.currentDay() + this.expectedDays());
             },
             expectedTiers() {
                 let expecting = this.currentXp() + this.expectedXp();
@@ -462,7 +474,7 @@ document.addEventListener('alpine:init', () => {
                 return (this.expectedPrestigeTiers() / 200) * 100;
             },
 
-            //expected prestige
+            // expected prestige
             expectedWillPrestige() {
                 return this.expectedTiers() > 80;
             },
@@ -470,11 +482,13 @@ document.addEventListener('alpine:init', () => {
                 return this.expectedPrestigeTiers() >= 120;
             },
             expectedPrestigeDays() {
-                return (63 - this.expectedPrestigeSpareDays()) - this.daysPlayed();
+                // was 63 — now dynamic
+                return (this.seasonLengthDays() - this.expectedPrestigeSpareDays()) - this.daysPlayed();
             },
             expectedPrestigeSpareDays() {
                 let extra = this.expectedXp() - (2000000 - this.currentXp());
-                return Math.min(extra / this.expectedDailyXp(), 7 * 9);
+                // cap by total season length
+                return Math.min(extra / this.expectedDailyXp(), this.seasonLengthDays());
             },
             expectedPrestigeTiers() {
                 let have = this.currentXp();
@@ -493,7 +507,7 @@ document.addEventListener('alpine:init', () => {
                 return 8 - this.expectedPrestigeTitles();
             },
 
-            //expected fail
+            // expected fail
             expectedWillFail() {
                 return this.expectedTiers() < 80;
             },
@@ -512,7 +526,7 @@ document.addEventListener('alpine:init', () => {
                 return this.expectedSpareTiersCoins() / 100;
             },
 
-            //coins rate
+            // coins rate
             expectedDailyCoins() {
                 return this.expectedWeeklyCoins() / 7;
             },
@@ -520,7 +534,8 @@ document.addEventListener('alpine:init', () => {
                 return this.coinsFromWeeklies(this.expectedWeeklies());
             },
             expectedSeasonalCoins() {
-                return this.expectedWeeklyCoins() * 9;
+                // was * 9 — now multiply by actual number of weeks in the season
+                return this.expectedWeeklyCoins() * this.seasonWeeks();
             },
             expectedCoins() {
                 return this.remainingDays() * this.expectedDailyCoins();
