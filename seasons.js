@@ -2,6 +2,12 @@
 // Keep newest season at the TOP of the array.
 window.SEASONS = [
   {
+    season: 2,
+    name: "Reign of Talon - Summit",
+    start: "2026-04-1418:00:00Z",
+    end: "2026-06-1618:00:00Z"
+  },
+  {
     season: 1,
     name: "Conquest — The Reign of Talon",
     start: "2026-02-10T18:00:00Z",
