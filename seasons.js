@@ -4,7 +4,7 @@ window.SEASONS = [
   {
     season: 2,
     name: "Reign of Talon - Summit",
-    start: ""2026-04-14T18:00:00Z",
+    start: "2026-04-14T18:00:00Z",
     end:   "2026-06-16T18:00:00Z"
   },
   {
