@@ -4,7 +4,7 @@ I've modified the original calculator to be more robust and easily updated for f
 
 Access the calculator here: https://susumajii.github.io/ow2-battle-pass-calculator/
 
-This is a battle pass calculator for Overwatch 2. Fill out a few fields and you will get back;
+This is a battle pass calculator for Overwatch. Fill out a few fields and you will get back;
 
 * Current progress and pace
 * Remaining effort and pace needed to finish
